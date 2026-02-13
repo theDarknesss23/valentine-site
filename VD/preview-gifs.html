@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Перегляд гіфок — вибери, які залишити</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 1rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f8f0f5;
+      color: #333;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 0.5rem; color: #5c2d4a; }
+    .hint {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 1rem;
+      padding: 0.5rem 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .gif-card {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      border: 2px solid transparent;
+      transition: border-color 0.2s, opacity 0.3s;
+    }
+    .gif-card.removed {
+      opacity: 0.5;
+      border-color: #e0e0e0;
+    }
+    .gif-card .thumb {
+      display: block;
+      width: 100%;
+      height: 140px;
+      border: none;
+      background: #f0f0f0;
+    }
+    .gif-card .info {
+      padding: 0.5rem 0.75rem;
+    }
+    .gif-card .num {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 0.25rem;
+    }
+    .gif-card .desc {
+      font-size: 0.85rem;
+      color: #5c2d4a;
+      font-weight: 500;
+    }
+    .gif-card .btn-remove {
+      display: block;
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.4rem;
+      font-size: 0.8rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #fee;
+      color: #c33;
+    }
+    .gif-card .btn-remove:hover { background: #fdd; }
+    .gif-card.removed .btn-remove {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .gif-card.removed .btn-remove::after { content: ' — повернути'; }
+    .out-wrap {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .out-wrap label { font-weight: 600; font-size: 0.9rem; display: block; margin-bottom: 0.5rem; }
+    .out-wrap textarea {
+      width: 100%;
+      min-height: 120px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    .out-wrap .steps {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Перегляд гіфок</h1>
+  <p class="hint">Натисни «Видалити» під гіфкою, яку хочеш прибрати з сторінки. Внизу з’явиться новий список — скопіюй його та заміни масив CUTE_GIFS у index.html (або напиши в чат номери для видалення, і я оновлю файл).</p>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="out-wrap">
+    <label for="output">Новий список гіфок (для вставки в index.html):</label>
+    <textarea id="output" readonly></textarea>
+    <p class="steps">Кроки: відкрий index.html → знайди const CUTE_GIFS = [ ... ]; → заміни вміст масиву на текст з поля вище.</p>
+  </div>
+
+  <script>
+    const GIFS = [
+      { id: 'wvYNSqBAMDVx8CEYkt', desc: 'propose I love you' },
+      { id: '9rgVLYnPzzUpLsaaxN', desc: 'kiss valentine' },
+      { id: '1xOOQSMJ9X4UykElSk', desc: 'puppy with rose' },
+      { id: 'sNaBNHusmmndIdzAFw', desc: 'I love you hearts' },
+      { id: 'H8mWgckLHm38b2JNvQ', desc: 'I love you hearts 2' },
+      { id: '26xBGaIaD7bBYc0sU', desc: 'love animation cute' },
+      { id: 'bDUoCKFTij2CWC6SO0', desc: 'love heart hearts' },
+      { id: '8QbwUh40Hl96yMgvOx', desc: 'red panda flowers' },
+      { id: '4N1wOi78ZGzSB6H7vK', desc: 'teddy hearts' },
+      { id: 'NTLULEn4dLfh4JByEJ', desc: 'will you be my valentine' },
+      { id: 'HJibfnd7xqk5hAMD4v', desc: 'cat blowing kisses' },
+      { id: 'KxWDsHfQH6S8AnkZGo', desc: 'cat heart' },
+    ];
+
+    const grid = document.getElementById('grid');
+    const output = document.getElementById('output');
+
+    function render() {
+      grid.innerHTML = '';
+      GIFS.forEach((g, i) => {
+        const card = document.createElement('div');
+        card.className = 'gif-card' + (g.removed ? ' removed' : '');
+        card.dataset.index = i;
+        card.innerHTML =
+          '<iframe class="thumb" src="https://giphy.com/embed/' + g.id + '" title="' + (g.desc || '') + '" allowFullScreen></iframe>' +
+          '<div class="info">' +
+            '<div class="num">№ ' + (i + 1) + '</div>' +
+            '<div class="desc">' + (g.desc || g.id) + '</div>' +
+            '<button type="button" class="btn-remove">' + (g.removed ? 'Повернути' : 'Видалити') + '</button>' +
+          '</div>';
+        card.querySelector('.btn-remove').addEventListener('click', () => {
+          g.removed = !g.removed;
+          render();
+        });
+        grid.appendChild(card);
+      });
+
+      const kept = GIFS.filter(g => !g.removed);
+      const lines = kept.map(g => "      '" + g.id + "',  // " + g.desc);
+      const code = '    const CUTE_GIFS = [\n' + lines.join('\n') + '\n    ];';
+      output.value = code;
+    }
+
+    render();
+  </script>
+</body>
+</html>
