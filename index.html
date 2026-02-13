@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Будеш моїм валентином?</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+    body {
+      background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fad0c4 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .card {
+      position: relative;
+      width: min(420px, 100%);
+      min-height: 280px;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-height: 220px;
+    }
+    .screen.active {
+      display: flex;
+    }
+    .ask-title {
+      font-size: clamp(1.25rem, 4vw, 1.6rem);
+      color: #5c2d4a;
+      margin: 0 0 1.5rem;
+      line-height: 1.4;
+    }
+    .buttons-wrap {
+      position: relative;
+      width: 100%;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn:focus {
+      outline: 2px solid #5c2d4a;
+      outline-offset: 2px;
+    }
+    .btn-yes {
+      background: linear-gradient(135deg, #e84393, #fd79a8);
+      color: #fff;
+    }
+    .btn-yes:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 16px rgba(232, 67, 147, 0.4);
+    }
+    .btn-no {
+      background: #fff;
+      color: #5c2d4a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: left 0.25s ease, top 0.25s ease, transform 0.25s ease;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .btn-no.escaping {
+      position: absolute;
+      transform: translate(-50%, -50%);
+    }
+    .btn-no:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .success-title {
+      font-size: clamp(1.5rem, 5vw, 2rem);
+      color: #5c2d4a;
+      margin: 0 0 0.5rem;
+    }
+    .success-subtitle {
+      font-size: 1.1rem;
+      color: #7d4a6a;
+      margin: 0 0 1rem;
+    }
+    .gif-wrap {
+      width: 100%;
+      max-width: 280px;
+      margin: 0.5rem 0 1rem;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.5);
+    }
+    .gif-wrap iframe {
+      display: block;
+      width: 100%;
+      height: 200px;
+      border: none;
+    }
+    .love-text {
+      font-size: 1.2rem;
+      color: #c44569;
+      margin: 0.5rem 0 1rem;
+      font-weight: 600;
+    }
+    .btn-reset {
+      background: rgba(255,255,255,0.9);
+      color: #5c2d4a;
+      border: 2px solid rgba(92, 45, 74, 0.3);
+    }
+    .btn-reset:hover {
+      background: #fff;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="ask-screen" class="screen active">
+      <h1 class="ask-title" id="ask-title"></h1>
+      <div class="buttons-wrap" id="buttons-wrap">
+        <button type="button" class="btn btn-yes" id="btn-yes" aria-label="Сказати так">ТАК</button>
+        <button type="button" class="btn btn-no" id="btn-no" aria-label="Сказати ні">НІ</button>
+      </div>
+    </div>
+    <div id="success-screen" class="screen">
+      <h2 class="success-title">💖 УРА!!! 💖</h2>
+      <p class="success-subtitle">Кращого рішення не бувало 😘</p>
+      <div class="gif-wrap">
+        <iframe id="success-gif" src="https://giphy.com/embed/wvYNSqBAMDVx8CEYkt" title="Cute love GIF" allowFullScreen allow="encrypted-media"></iframe>
+      </div>
+      <p class="love-text">Я тебе люблю ❤️</p>
+      <button type="button" class="btn btn-reset" id="btn-reset" aria-label="Повернутися до питання">Спочатку</button>
+    </div>
+  </div>
+
+  <script>
+    const NAME = 'Кирил';
+
+    const CUTE_GIFS = [
+      'wvYNSqBAMDVx8CEYkt',  // propose I love you
+      '9rgVLYnPzzUpLsaaxN',  // kiss valentine
+      '1xOOQSMJ9X4UykElSk',  // puppy with rose
+      'sNaBNHusmmndIdzAFw',  // I love you hearts
+      'H8mWgckLHm38b2JNvQ',  // I love you hearts
+      '26xBGaIaD7bBYc0sU',   // love animation cute
+      'bDUoCKFTij2CWC6SO0',   // love heart hearts
+      '8QbwUh40Hl96yMgvOx',  // red panda flowers
+      '4N1wOi78ZGzSB6H7vK',  // teddy hearts
+      'NTLULEn4dLfh4JByEJ',   // will you be my valentine
+      'HJibfnd7xqk5hAMD4v',  // cat blowing kisses
+      'KxWDsHfQH6S8AnkZGo',  // cat heart
+    ];
+
+    const askScreen = document.getElementById('ask-screen');
+    const successScreen = document.getElementById('success-screen');
+    const askTitle = document.getElementById('ask-title');
+    const wrap = document.getElementById('buttons-wrap');
+    const btnYes = document.getElementById('btn-yes');
+    const btnNo = document.getElementById('btn-no');
+    const btnReset = document.getElementById('btn-reset');
+    const successGif = document.getElementById('success-gif');
+
+    askTitle.textContent = `${NAME}, будеш моїм валентином? 💘`;
+
+    function pickRandomGif() {
+      const id = CUTE_GIFS[Math.floor(Math.random() * CUTE_GIFS.length)];
+      successGif.src = 'https://giphy.com/embed/' + id;
+    }
+
+    function moveNoButton() {
+      const card = wrap.closest('.card');
+      const cardRect = card.getBoundingClientRect();
+      const btnRect = btnNo.getBoundingClientRect();
+      const padding = 14;
+      const halfW = btnRect.width / 2;
+      const halfH = btnRect.height / 2;
+      const minX = halfW + padding;
+      const maxX = cardRect.width - halfW - padding;
+      const minY = halfH + padding;
+      const maxY = cardRect.height - halfH - padding;
+      if (maxX <= minX || maxY <= minY) return;
+      const left = minX + Math.random() * (maxX - minX);
+      const top = minY + Math.random() * (maxY - minY);
+      btnNo.style.left = `${left}px`;
+      btnNo.style.top = `${top}px`;
+      btnNo.style.transform = 'translate(-50%, -50%)';
+    }
+
+    function initNoPosition() {
+      btnNo.classList.remove('escaping');
+      btnNo.style.left = '';
+      btnNo.style.top = '';
+      btnNo.style.transform = '';
+    }
+
+    function ensureNoEscaping() {
+      if (btnNo.classList.contains('escaping')) return;
+      btnNo.classList.add('escaping');
+      const card = wrap.closest('.card');
+      const cardRect = card.getBoundingClientRect();
+      const btnRect = btnNo.getBoundingClientRect();
+      const centerX = btnRect.left - cardRect.left + btnRect.width / 2;
+      const centerY = btnRect.top - cardRect.top + btnRect.height / 2;
+      btnNo.style.left = centerX + 'px';
+      btnNo.style.top = centerY + 'px';
+      btnNo.style.transform = 'translate(-50%, -50%)';
+    }
+
+    function handleNoEscape(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      ensureNoEscaping();
+      moveNoButton();
+    }
+
+    ['pointerenter', 'pointerdown', 'touchstart', 'click'].forEach(ev => {
+      btnNo.addEventListener(ev, handleNoEscape, { passive: false });
+    });
+
+    btnYes.addEventListener('click', () => {
+      pickRandomGif();
+      askScreen.classList.remove('active');
+      successScreen.classList.add('active');
+    });
+
+    btnReset.addEventListener('click', () => {
+      successScreen.classList.remove('active');
+      askScreen.classList.add('active');
+      initNoPosition();
+    });
+
+    initNoPosition();
+  </script>
+</body>
+</html>
